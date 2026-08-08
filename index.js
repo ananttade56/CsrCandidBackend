@@ -10,7 +10,7 @@ const clientUrls = process.env.CLIENT_URL
 const allowedOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'https://red-chimpanzee-237853.hostingersite.com',
+    'https://red-chimpanzee-237853.hostingersite.com/',
     ...clientUrls
 ].filter(Boolean);
 
@@ -45,4 +45,4 @@ app.use((err, req, res, next) => {
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
-});
+});
