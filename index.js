@@ -8,7 +8,7 @@ const clientUrls = process.env.CLIENT_URL
     : [];
 
 const allowedOrigins = [
-    'https://csrcandid.in/',
+    'https://csrcandid.in',
     ...clientUrls
 ].filter(Boolean);
 
