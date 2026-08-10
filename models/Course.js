@@ -10,6 +10,34 @@ const courseSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  duration: {
+    type: String,
+    trim: true,
+  },
+  level: {
+    type: String,
+    trim: true,
+  },
+  icon: {
+    type: String,
+    trim: true,
+  },
+  syllabus: {
+    type: [String],
+    default: [],
+  },
+  features: {
+    type: [String],
+    default: [],
+  },
+  price: {
+    type: String,
+    trim: true,
+  },
+  rating: {
+    type: String,
+    trim: true,
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

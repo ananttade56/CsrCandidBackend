@@ -15,7 +15,7 @@ const uploadVideo = async (req, res) => {
 
     const { courseId } = req.params;
     const { title, description } = req.body;
-    
+
     const newVideo = new Video({
       title,
       description,
@@ -38,7 +38,7 @@ const uploadVideo = async (req, res) => {
         '-c:v libx264',
         '-crf 28',
         '-preset fast',
-        '-vf scale=-2:\'min(720,ih)\''
+        '-vf scale=-2:min(720\\,ih)'
       ])
       .on('end', async () => {
         try {
@@ -46,7 +46,7 @@ const uploadVideo = async (req, res) => {
             fs.unlinkSync(inputPath);
           }
           fs.renameSync(outputPath, inputPath);
-          
+
           newVideo.compressionStatus = 'completed';
           await newVideo.save();
           console.log(`Video compression completed for ${newVideo._id}`);
@@ -77,13 +77,13 @@ const deleteVideo = async (req, res) => {
   try {
     const { videoId } = req.params;
     const video = await Video.findById(videoId);
-    
+
     if (!video) {
       return res.status(404).json({ message: 'Video not found' });
     }
 
     if (req.user.role !== 'Admin' && video.uploadedBy.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Not authorized to delete this video' });
+      return res.status(403).json({ message: 'Not authorized to delete this video' });
     }
 
     const inputPath = video.filePath;
@@ -91,15 +91,15 @@ const deleteVideo = async (req, res) => {
     const outputPath = inputPath.replace(ext, `_compressed${ext}`);
 
     try {
-        if (fs.existsSync(inputPath)) {
-            fs.unlinkSync(inputPath);
-        }
-        if (fs.existsSync(outputPath)) {
-            fs.unlinkSync(outputPath);
-        }
+      if (fs.existsSync(inputPath)) {
+        fs.unlinkSync(inputPath);
+      }
+      if (fs.existsSync(outputPath)) {
+        fs.unlinkSync(outputPath);
+      }
     } catch (fsError) {
-        console.warn(`Could not delete physical video files for ${videoId}. They might be locked (EBUSY):`, fsError.message);
-        // Continue with database deletion even if physical file deletion fails.
+      console.warn(`Could not delete physical video files for ${videoId}. They might be locked (EBUSY):`, fsError.message);
+      // Continue with database deletion even if physical file deletion fails.
     }
 
     await Video.findByIdAndDelete(videoId);
@@ -113,23 +113,23 @@ const getVideos = async (req, res) => {
   try {
     const { courseId } = req.query;
     let query = {};
-    
+
     if (courseId) {
-        query.courseId = courseId;
+      query.courseId = courseId;
     }
 
     if (req.user.role === 'Student') {
-        const user = await User.findById(req.user.id);
-        if (courseId && !user.enrolledCourses.includes(courseId)) {
-            return res.status(403).json({ message: 'Not enrolled in this course' });
-        }
-        if (!courseId) {
-            query.courseId = { $in: user.enrolledCourses };
-        }
+      const user = await User.findById(req.user.id);
+      if (courseId && !user.enrolledCourses.includes(courseId)) {
+        return res.status(403).json({ message: 'Not enrolled in this course' });
+      }
+      if (!courseId) {
+        query.courseId = { $in: user.enrolledCourses };
+      }
     }
 
     const videos = await Video.find(query).populate('courseId', 'title').populate('uploadedBy', 'username');
-    
+
     // Generate signed URLs for each video
     const videosWithUrls = videos.map(video => {
       const token = jwt.sign(
@@ -137,7 +137,7 @@ const getVideos = async (req, res) => {
         process.env.JWT_SECRET || 'fallback_secret',
         { expiresIn: '2h' }
       );
-      
+
       return {
         ...video.toObject(),
         streamUrl: `/api/videos/stream/${video._id}?token=${token}`

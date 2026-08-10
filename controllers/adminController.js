@@ -60,8 +60,8 @@ const removeAccess = async (req, res) => {
 
 const createCourse = async (req, res) => {
   try {
-    const { title, description } = req.body;
-    const course = new Course({ title, description, createdBy: req.user.id });
+    const { title, description, duration, level, icon, syllabus, features, price, rating } = req.body;
+    const course = new Course({ title, description, duration, level, icon, syllabus, features, price, rating, createdBy: req.user.id });
     await course.save();
     res.status(201).json({ message: 'Course created successfully', course });
   } catch (error) {
@@ -90,10 +90,10 @@ const getCourses = async (req, res) => {
 const updateCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description } = req.body;
+    const { title, description, duration, level, icon, syllabus, features, price, rating } = req.body;
     const course = await Course.findByIdAndUpdate(
       id,
-      { title, description },
+      { title, description, duration, level, icon, syllabus, features, price, rating },
       { new: true, runValidators: true }
     );
     if (!course) {
