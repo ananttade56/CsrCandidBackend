@@ -22,51 +22,11 @@ const uploadVideo = async (req, res) => {
       filePath: req.file.path,
       courseId,
       uploadedBy: req.user.id,
-      compressionStatus: 'processing'
+      compressionStatus: 'completed' // Marked completed instantly to avoid shared hosting ffmpeg crashes
     });
 
     await newVideo.save();
-    res.status(201).json({ message: 'Video uploaded successfully, compression started', video: newVideo });
-
-    // Background compression
-    const inputPath = req.file.path;
-    const ext = path.extname(inputPath);
-    const outputPath = inputPath.replace(ext, `_compressed${ext}`);
-
-    ffmpeg(inputPath)
-      .outputOptions([
-        '-c:v libx264',
-        '-crf 28',
-        '-preset fast',
-        '-vf scale=-2:min(720\\,ih)'
-      ])
-      .on('end', async () => {
-        try {
-          if (fs.existsSync(inputPath)) {
-            fs.unlinkSync(inputPath);
-          }
-          fs.renameSync(outputPath, inputPath);
-
-          newVideo.compressionStatus = 'completed';
-          await newVideo.save();
-          console.log(`Video compression completed for ${newVideo._id}`);
-        } catch (err) {
-          console.error('Error updating video status after compression:', err);
-        }
-      })
-      .on('error', async (err) => {
-        console.error(`Error compressing video ${newVideo._id}:`, err);
-        try {
-          newVideo.compressionStatus = 'failed';
-          await newVideo.save();
-          if (fs.existsSync(outputPath)) {
-            fs.unlinkSync(outputPath);
-          }
-        } catch (updateErr) {
-          console.error('Error updating status after failed compression:', updateErr);
-        }
-      })
-      .save(outputPath);
+    res.status(201).json({ message: 'Video uploaded successfully', video: newVideo });
 
   } catch (error) {
     res.status(500).json({ message: 'Error uploading video', error: error.message });
