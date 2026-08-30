@@ -19,8 +19,8 @@ const clientUrls = process.env.CLIENT_URL
   : [];
 
 const allowedOrigins = [
-  // 'https://csrcandid.in',
-  'http://localhost:5173',
+  'https://csrcandid.in',
+  // 'http://localhost:5173',
   ...clientUrls
 ].filter(Boolean);
 
