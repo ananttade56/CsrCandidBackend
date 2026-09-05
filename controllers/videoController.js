@@ -7,6 +7,52 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
+const uploadChunk = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No chunk file uploaded' });
+    }
+
+    const { courseId } = req.params;
+    const { chunkIndex, totalChunks, uploadId, title, description, fileName } = req.body;
+
+    const tempDir = path.join(__dirname, '../uploads/temp');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    const ext = path.extname(fileName);
+    const tempFilePath = path.join(tempDir, `${uploadId}${ext}`);
+    const chunkFilePath = req.file.path;
+
+    fs.appendFileSync(tempFilePath, fs.readFileSync(chunkFilePath));
+    fs.unlinkSync(chunkFilePath);
+
+    if (parseInt(chunkIndex) === parseInt(totalChunks) - 1) {
+      const finalFileName = `${uploadId}-${Date.now()}${ext}`;
+      const finalPath = path.join(__dirname, '../uploads', finalFileName);
+
+      fs.renameSync(tempFilePath, finalPath);
+
+      const newVideo = new Video({
+        title,
+        description,
+        filePath: finalPath,
+        courseId,
+        uploadedBy: req.user.id,
+        compressionStatus: 'completed'
+      });
+
+      await newVideo.save();
+      return res.status(201).json({ message: 'Video uploaded successfully', video: newVideo });
+    }
+
+    res.status(200).json({ message: `Chunk ${chunkIndex} processed successfully` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error uploading chunk', error: error.message });
+  }
+};
+
 const uploadVideo = async (req, res) => {
   try {
     if (!req.file) {
@@ -148,4 +194,4 @@ const streamVideo = async (req, res) => {
   }
 };
 
-module.exports = { uploadVideo, deleteVideo, getVideos, streamVideo };
+module.exports = { uploadVideo, uploadChunk, deleteVideo, getVideos, streamVideo };
