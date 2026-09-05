@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const signUp = async (req, res) => {
   try {
     const { username, password, role, courseIds } = req.body;
-    
+
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
@@ -15,7 +15,7 @@ const signUp = async (req, res) => {
 
     let initialStatus = 'Pending';
     if (role === 'Admin') {
-       initialStatus = 'Approved'; // For testing purposes, auto-approve admins
+      initialStatus = 'Approved'; // For testing purposes, auto-approve admins
     }
 
     const newUser = new User({
@@ -56,7 +56,7 @@ const login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    res.status(200).json({ message: 'Login successful', token, role: user.role });
+    res.status(200).json({ message: 'Login successful', token, role: user.role, username: user.username });
   } catch (error) {
     res.status(500).json({ message: 'Error logging in', error: error.message });
   }

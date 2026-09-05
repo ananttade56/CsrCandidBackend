@@ -4,11 +4,11 @@ const Course = require('../models/Course');
 const approveStudent = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { courseIds } = req.body;
+    const { courseIds, role } = req.body;
 
     const student = await User.findById(studentId);
-    if (!student || student.role !== 'Student') {
-      return res.status(404).json({ message: 'Student not found' });
+    if (!student) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
     student.status = 'Approved';
@@ -16,6 +16,9 @@ const approveStudent = async (req, res) => {
       student.enrolledCourses = courseIds;
     }
     // If courseIds is not provided, we keep the student's existing enrolledCourses (their requests)
+    if (role && ['Student', 'Teacher'].includes(role)) {
+      student.role = role;
+    }
 
     await student.save();
     res.status(200).json({ message: 'Student approved successfully', student });
@@ -29,8 +32,8 @@ const rejectStudent = async (req, res) => {
     const { studentId } = req.params;
 
     const student = await User.findById(studentId);
-    if (!student || student.role !== 'Student') {
-      return res.status(404).json({ message: 'Student not found' });
+    if (!student) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
     student.status = 'Rejected';
@@ -72,13 +75,13 @@ const createCourse = async (req, res) => {
 const getCourses = async (req, res) => {
   try {
     let query = {};
-    if (req.user.role === 'Student') {
-        const user = await User.findById(req.user.id);
-        if (user.enrolledCourses && user.enrolledCourses.length > 0) {
-            query._id = { $in: user.enrolledCourses };
-        } else {
-            return res.status(200).json({ courses: [] });
-        }
+    if (req.user.role === 'Student' || req.user.role === 'Teacher') {
+      const user = await User.findById(req.user.id);
+      if (user.enrolledCourses && user.enrolledCourses.length > 0) {
+        query._id = { $in: user.enrolledCourses };
+      } else {
+        return res.status(200).json({ courses: [] });
+      }
     }
     const courses = await Course.find(query).populate('createdBy', 'username');
     res.status(200).json({ courses });
@@ -130,7 +133,7 @@ const getPendingStudents = async (req, res) => {
 
 const getApprovedStudents = async (req, res) => {
   try {
-    const students = await User.find({ status: 'Approved', role: 'Student' }).select('-password').populate('enrolledCourses', 'title');
+    const students = await User.find({ status: 'Approved', role: { $in: ['Student', 'Teacher'] } }).select('-password').populate('enrolledCourses', 'title');
     res.status(200).json({ students });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching approved students', error: error.message });

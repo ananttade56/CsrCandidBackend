@@ -124,7 +124,7 @@ const getVideos = async (req, res) => {
       query.courseId = courseId;
     }
 
-    if (req.user.role === 'Student') {
+    if (req.user.role === 'Student' || req.user.role === 'Teacher') {
       const user = await User.findById(req.user.id);
       if (courseId && !user.enrolledCourses.includes(courseId)) {
         return res.status(403).json({ message: 'Not enrolled in this course' });
